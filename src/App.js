@@ -15,10 +15,12 @@ import {
   useColorModeValue,
   Center,
   Box,
-  useToast 
+  useToast, 
+  Textarea
 } from '@chakra-ui/react';
 
 import Popup from './components/Popup';
+import DonationPopup from './components/DonationPopup';
 
 const Tezos = new TezosToolkit("https://mainnet-tezos.giganode.io");
 const wallet = new BeaconWallet({ name: "Swap A Taco" });
@@ -26,6 +28,7 @@ const contractAddy = "KT1XtJ6k51y7HpLFLTNv2wBYFhfVMZ6ow3Sz";
 
 function App() {
   const [popupState, setPopupState] = useState(false);
+  const [donationPopupState, setDonationPopupState] = useState(false);
 
   Tezos.setWalletProvider(wallet);
 
@@ -37,11 +40,12 @@ function App() {
     if(await checkConnectionStatus() == false){
       setPopupState(true);
     }else{
-      var nftSend = document.getElementById("nftSend").value;
-      var nftRecieve = document.getElementById("nftRecieve").value;
+      var nftSend = document.getElementById("nftSend").value.split(/\n/);
+      var nftReceive = document.getElementById("nftReceive").value.split(/\n/);
       var walletAddress = document.getElementById("walletAddress").value;
-      if(nftSend.includes(':') && nftRecieve.includes(':')){
-        var opHash = await submitTradeFunction(nftSend, nftRecieve, walletAddress);
+
+      if(nftSend[0].includes(':') && nftReceive[0].includes(':')){
+        var opHash = await submitTradeFunction(nftSend, nftReceive, walletAddress);
         if(opHash){
           toast({
             title: "Transaction Submitted :|",
@@ -208,19 +212,68 @@ function App() {
         </Button>
       </Popup>
 
+      <DonationPopup trigger={donationPopupState} color1={useColorModeValue('gray.50', 'gray.800')} color2={useColorModeValue('white', 'gray.700')} color3={useColorModeValue('gray.800', 'gray.200')}>
+        <Stack spacing={4} direction={{ base: 'column', md: 'row' }} w={'full'}>
+          <Button
+            bg={'blue.400'}
+            rounded={'full'}
+            color={'white'}
+            flex={'1 0 auto'}
+            _hover={{ bg: 'blue.500' }}
+            _focus={{ bg: 'blue.500' }}
+            onClick={() => window.open('https://tzkt.io/tz1XsSFr3xcn9Z8XEMkAgnxsQkVW38HfWJ6x/', '_blank')}>
+            Tezos
+          </Button>
+        </Stack>
+        <Stack spacing={4} direction={{ base: 'column', md: 'row' }} w={'full'}>
+          <Button
+            bg={'yellow.400'}
+            rounded={'full'}
+            color={'white'}
+            flex={'1 0 auto'}
+            _hover={{ bg: 'yellow.500' }}
+            _focus={{ bg: 'yellow.500' }}
+            onClick={() => window.open('https://dogechain.info/address/D72S77LwXqKPDB1mJfWLQstNfk23MaUGzq', '_blank')}>
+            Dogecoin
+          </Button>
+        </Stack>
+        <Stack spacing={4} direction={{ base: 'column', md: 'row' }} w={'full'}>
+          <Button
+            bg={'red.400'}
+            rounded={'full'}
+            color={'white'}
+            flex={'1 0 auto'}
+            _hover={{ bg: 'red.500' }}
+            _focus={{ bg: 'red.500' }}
+            onClick={() => setDonationPopupState(false)}>
+            Close
+          </Button>
+        </Stack>
+      </DonationPopup>
+
       <Flex
       minH={'1vh'}
       align={'right'}
       justify={'right'}
       padding={'10px'}
       bg={useColorModeValue('gray.50', 'gray.800')}>
-        <Button bg={'red.400'}
-        color={'white'}
-        w="half"
-        onClick={disconnectWallet}
-        _hover={{
-          bg: 'red.500',
-        }}>Disconnect</Button>
+        <Stack direction='row' spacing={4}>
+          <Button bg={'purple.400'}
+          color={'white'}
+          w="half"
+          onClick={() => setDonationPopupState(true)}
+          _hover={{
+            bg: 'purple.500',
+          }}>Donate</Button>
+
+          <Button bg={'red.400'}
+          color={'white'}
+          w="half"
+          onClick={disconnectWallet}
+          _hover={{
+            bg: 'red.500',
+          }}>Disconnect</Button>
+        </Stack>
       </Flex>
 
       <Flex
@@ -243,7 +296,7 @@ function App() {
           
           <FormControl isRequired>
             <FormLabel>NFT To Send</FormLabel>
-            <Input 
+            <Textarea 
               placeholder="Contract Address:Token ID"
               _placeholder={{ color: 'gray.500' }}
               id="nftSend"
@@ -252,11 +305,11 @@ function App() {
             />
           </FormControl>
           <FormControl isRequired>
-            <FormLabel>NFT To Recieve</FormLabel>
-            <Input
+            <FormLabel>NFT To Receive</FormLabel>
+            <Textarea
               placeholder="Contract Address:Token ID"
               _placeholder={{ color: 'gray.500' }}
-              id="nftRecieve"
+              id="nftReceive"
               resize="none"
               type="text"
             />
@@ -398,57 +451,82 @@ async function checkConnectionStatus(){
   }
 }
 
-async function submitTradeFunction(nftSend, nftRecieve, walletAddress){
+async function submitTradeFunction(nftSend, nftReceive, walletAddress){
   const contract = await Tezos.wallet.at(contractAddy);
-  const operatorContract = await Tezos.wallet.at(nftSend.split(':')[0]);
   const activeAccount = await wallet.client.getActiveAccount();
 
-  var tokensArray = [{
-    "id": nftSend.split(':')[1],
-    "fa2": nftSend.split(':')[0],
-    "amount": "1"
-  }];
+  var tokensArray = [];
+  var forTokensArray = [];
 
-  var forTokensArray = [{
-    "id": nftRecieve.split(':')[1],
-    "fa2": nftRecieve.split(':')[0],
-    "amount": "1"
-  }];
+  for(var i = 0; i< nftSend.length; i++){
+    tokensArray.push({
+      "id": nftSend[i].split(':')[1],
+      "fa2": nftSend[i].split(':')[0],
+      "amount": "1"
+    });
+  }
 
-  var updateOperatorArray = [{
-    "add_operator":{
-      "owner": activeAccount.address,
-      "operator": contractAddy,
-      "token_id": nftSend.split(':')[1]
-    }
-  }];
-
-  console.log(updateOperatorArray);
+  for(var i = 0; i< nftReceive.length; i++){
+    forTokensArray.push({
+      "id": nftReceive[i].split(':')[1],
+      "fa2": nftReceive[i].split(':')[0],
+      "amount": "1"
+    });
+  }
 
   try{
 
     if(walletAddress.length > 0){
 
       if(walletAddress.length == 36){
-        const result = await Tezos.wallet.batch()
-        .withContractCall(operatorContract.methods.update_operators(updateOperatorArray))
-        .withContractCall(contract.methods.propose_trade(tokensArray, forTokensArray, walletAddress))
-        .send();
-  
-        return result.opHash;
+
+        var batch = await Tezos.wallet.batch();
+        
+        for(var i = 0; i < nftSend.length; i++){
+          var updateOperatorArray = [{
+            "add_operator":{
+              "owner": activeAccount.address,
+              "operator": contractAddy,
+              "token_id": nftSend[i].split(':')[1]
+            }
+          }];
+
+          const operatorContract = await Tezos.wallet.at(nftSend[i].split(':')[0]);
+          batch.withContractCall(operatorContract.methods.update_operators(updateOperatorArray))
+        }
+
+        batch.withContractCall(contract.methods.propose_trade(tokensArray, forTokensArray, walletAddress));
+
+        try{
+          var result = await batch.send();
+          return result.opHash;
+        }catch{
+          return false;
+        }
+
       }else{
         return false;
       }
     }else{
-      const result = await Tezos.wallet.batch()
-      .withContractCall(operatorContract.methods.update_operators(updateOperatorArray))
-      .withContractCall(contract.methods.propose_trade(tokensArray, forTokensArray))
-      .send();
+      var batch = await Tezos.wallet.batch();
+        
+      for(var i = 0; i < nftSend.length; i++){
+        var updateOperatorArray = [{
+          "add_operator":{
+            "owner": activeAccount.address,
+            "operator": contractAddy,
+            "token_id": nftSend[i].split(':')[1]
+          }
+        }];
 
+        const operatorContract = await Tezos.wallet.at(nftSend[i].split(':')[0]);
+        batch.withContractCall(operatorContract.methods.update_operators(updateOperatorArray))
+      }
+
+      batch.withContractCall(contract.methods.propose_trade(tokensArray, forTokensArray));
+      var result = await batch.send();
       return result.opHash;
     }
-
-    
   }catch{
     return false;
   }
@@ -457,41 +535,32 @@ async function submitTradeFunction(nftSend, nftRecieve, walletAddress){
 async function acceptTradeFunction(acceptTradeID){
   const contract = await Tezos.wallet.at(contractAddy);
   const activeAccount = await wallet.client.getActiveAccount();
-  var updateOperatorfa2;
-  var updateOperatorID;
 
   const response = await fetch(`https://api.tzkt.io/v1/bigmaps/51052/keys/${acceptTradeID}`);
   const parsedBody = await response.json();
 
-  updateOperatorfa2 = parsedBody.value.tokens2[0].fa2;
-  updateOperatorID = parsedBody.value.tokens2[0].id;
-  
-  if(updateOperatorfa2 && updateOperatorID){
-    const operatorContract = await Tezos.wallet.at(updateOperatorfa2);
+  var batch = await Tezos.wallet.batch();
 
-    var updateOperatorArray = [{
-      "add_operator":{
-        "owner": activeAccount.address,
-        "operator": contractAddy,
-        "token_id": updateOperatorID
-      }
-    }];
+  try{
+    for(var i = 0; i < parsedBody.value.tokens2.length; i++){
+      var updateOperatorArray = [{
+        "add_operator":{
+          "owner": activeAccount.address,
+          "operator": contractAddy,
+          "token_id": parsedBody.value.tokens2[i].id
+        }
+      }];
   
-    try{
-      const result = await Tezos.wallet.batch()
-      .withContractCall(operatorContract.methods.update_operators(updateOperatorArray))
-      .withContractCall(contract.methods.accept_trade(acceptTradeID))
-      .send();
-  
-      return result.opHash;
-    }catch{
-      return false;
+      const operatorContract = await Tezos.wallet.at(parsedBody.value.tokens2[i].fa2);
+      batch.withContractCall(operatorContract.methods.update_operators(updateOperatorArray));
     }
-  }else{
-    console.log("Unable to get Operator FA2 nor Operator ID");
+
+    batch.withContractCall(contract.methods.accept_trade(acceptTradeID));
+    var result = await batch.send();
+    return result.opHash;
+  }catch{
     return false;
   }
-  
 }
 
 async function cancelTradeFunction(cancelTradeID){
