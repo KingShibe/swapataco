@@ -2,7 +2,7 @@
 
 [Swap A Taco](https://swapataco.com) is a modern, free to use, open source frontend to interact with the Tezos NFT trading [contract](https://tzkt.io/KT1XtJ6k51y7HpLFLTNv2wBYFhfVMZ6ow3Sz/operations/) created by [Javier Graciá Carpio](https://github.com/jagracar).
 
-![SwapATacoSwapPageScreenshot](./readme/swappage.png)
+![SwapATacoSwapPageScreenshot](./images/swappage.png)
 
 ## Installation
 

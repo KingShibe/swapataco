@@ -20,7 +20,6 @@ import {
 } from '@chakra-ui/react';
 
 import Popup from './components/Popup';
-import DonationPopup from './components/DonationPopup';
 
 const Tezos = new TezosToolkit("https://mainnet-tezos.giganode.io");
 const wallet = new BeaconWallet({ name: "Swap A Taco" });
@@ -28,7 +27,6 @@ const contractAddy = "KT1XtJ6k51y7HpLFLTNv2wBYFhfVMZ6ow3Sz";
 
 function App() {
   const [popupState, setPopupState] = useState(false);
-  const [donationPopupState, setDonationPopupState] = useState(false);
 
   Tezos.setWalletProvider(wallet);
 
@@ -212,45 +210,6 @@ function App() {
         </Button>
       </Popup>
 
-      <DonationPopup trigger={donationPopupState} color1={useColorModeValue('gray.50', 'gray.800')} color2={useColorModeValue('white', 'gray.700')} color3={useColorModeValue('gray.800', 'gray.200')}>
-        <Stack spacing={4} direction={{ base: 'column', md: 'row' }} w={'full'}>
-          <Button
-            bg={'blue.400'}
-            rounded={'full'}
-            color={'white'}
-            flex={'1 0 auto'}
-            _hover={{ bg: 'blue.500' }}
-            _focus={{ bg: 'blue.500' }}
-            onClick={() => window.open('https://tzkt.io/tz1XsSFr3xcn9Z8XEMkAgnxsQkVW38HfWJ6x/', '_blank')}>
-            Tezos
-          </Button>
-        </Stack>
-        <Stack spacing={4} direction={{ base: 'column', md: 'row' }} w={'full'}>
-          <Button
-            bg={'yellow.400'}
-            rounded={'full'}
-            color={'white'}
-            flex={'1 0 auto'}
-            _hover={{ bg: 'yellow.500' }}
-            _focus={{ bg: 'yellow.500' }}
-            onClick={() => window.open('https://dogechain.info/address/D72S77LwXqKPDB1mJfWLQstNfk23MaUGzq', '_blank')}>
-            Dogecoin
-          </Button>
-        </Stack>
-        <Stack spacing={4} direction={{ base: 'column', md: 'row' }} w={'full'}>
-          <Button
-            bg={'red.400'}
-            rounded={'full'}
-            color={'white'}
-            flex={'1 0 auto'}
-            _hover={{ bg: 'red.500' }}
-            _focus={{ bg: 'red.500' }}
-            onClick={() => setDonationPopupState(false)}>
-            Close
-          </Button>
-        </Stack>
-      </DonationPopup>
-
       <Flex
       minH={'1vh'}
       align={'right'}
@@ -258,14 +217,6 @@ function App() {
       padding={'10px'}
       bg={useColorModeValue('gray.50', 'gray.800')}>
         <Stack direction='row' spacing={4}>
-          <Button bg={'purple.400'}
-          color={'white'}
-          w="half"
-          onClick={() => setDonationPopupState(true)}
-          _hover={{
-            bg: 'purple.500',
-          }}>Donate</Button>
-
           <Button bg={'red.400'}
           color={'white'}
           w="half"
